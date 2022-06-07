@@ -55,11 +55,14 @@ export function initGlobalAPI (Vue: GlobalAPI) {
   Vue.nextTick = nextTick
 
   // 2.6 explicit observable API
-  Vue.observable = <T>(obj: T): T => {
+  // 向外暴露为对象设置响应式的方法
+  Vue.observable = <>(obj: T): T => {
+    // 为对象设置响应式
     observe(obj)
     return obj
   }
 
+  // Vue全局配置上的 component、directive、filter选项
   Vue.options = Object.create(null)
   ASSET_TYPES.forEach(type => {
     Vue.options[type + 's'] = Object.create(null)
@@ -67,12 +70,18 @@ export function initGlobalAPI (Vue: GlobalAPI) {
 
   // this is used to identify the "base" constructor to extend all plain-object
   // components with in Weex's multi-instance scenarios.
+  // 将Vue构造函数赋值给 Vue.options_base
   Vue.options._base = Vue
 
+  // 将 keep-alive 组件放到 Vue.options.component 对象中
   extend(Vue.options.components, builtInComponents)
 
+  // 初始化Vue.use
   initUse(Vue)
+  // Vue.mixin
   initMixin(Vue)
+  // Vue.extend
   initExtend(Vue)
+  // Vue.component\directive\filter
   initAssetRegisters(Vue)
 }
