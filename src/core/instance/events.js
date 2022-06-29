@@ -51,17 +51,30 @@ export function updateComponentListeners (
 
 export function eventsMixin (Vue: Class<Component>) {
   const hookRE = /^hook:/
+  // 将所有的事件和对应的回调放到 vm._events 对象上，格式：
+  // {event1: [cb1,cb2,...],...}
   Vue.prototype.$on = function (event: string | Array<string>, fn: Function): Component {
     const vm: Component = this
+    // 事件为数组的情况
+    // this.$on([event1, event2,...], function() {xxx})
     if (Array.isArray(event)) {
       for (let i = 0, l = event.length; i < l; i++) {
+        // 用for遍历调用$on
         vm.$on(event[i], fn)
       }
     } else {
+      // 比如 如果存在 vm._events['coustom-click'] = []
+      // 这段的意思是说一个事件可以设置多个响应函数
+      // this.$on('coustom-click',cb1)
+      // this.$on('coustom-click',cb2)
+      // 解析成vm._event['coustom-click'] = [cb1,cb2]
       (vm._events[event] || (vm._events[event] = [])).push(fn)
       // optimize hook:event cost by using a boolean flag marked at registration
       // instead of a hash lookup
+
+      // @hook:mounted="xxx"
       if (hookRE.test(event)) {
+        // 置为true,标记当前组件实例存在 hook event
         vm._hasHookEvent = true
       }
     }
@@ -78,11 +91,15 @@ export function eventsMixin (Vue: Class<Component>) {
     vm.$on(event, on)
     return vm
   }
-
+  // 移除 vm._events 对像上指定事件(key)的指定回调函数
+  // 1.没有提供参数，将移除所有 vm._events = {}
+  // 2.
+  // 3.
   Vue.prototype.$off = function (event?: string | Array<string>, fn?: Function): Component {
     const vm: Component = this
     // all
     if (!arguments.length) {
+      // 移除所有的事件监听器 => vm._events = {}
       vm._events = Object.create(null)
       return vm
     }
@@ -94,15 +111,18 @@ export function eventsMixin (Vue: Class<Component>) {
       return vm
     }
     // specific event
+    // 获取指定事件的回调函数
     const cbs = vm._events[event]
     if (!cbs) {
       return vm
     }
     if (!fn) {
+    // vm._events[event] = [cb1,cb2,...] => vm._events[event] = null
       vm._events[event] = null
       return vm
     }
     // specific handler
+    // 移除指定事件的指定回调函数
     let cb
     let i = cbs.length
     while (i--) {
